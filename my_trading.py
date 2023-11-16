@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-06 09:58:29
-LastEditTime: 2023-11-16 15:14:38
+LastEditTime: 2023-11-16 16:05:58
 Description: Trading-related Modules
 '''
 import pandas as pd
@@ -53,7 +53,7 @@ def my_max_drawdown(pnl) -> pd.Series:
     for row in cum_pnl:
         if row > peak_value:
             peak_value = row
-        drawdown = peak_value - row
+        drawdown = peak_value - row 
         max_drawdown = max(drawdown, max_drawdown)
     return np.round(max_drawdown * 100, 2)
 

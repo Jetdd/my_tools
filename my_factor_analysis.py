@@ -21,7 +21,7 @@ class Report:
     ir: pd.DataFrame
     sharpe: float
     max_drawdown: float
-    
+    stats: pd.DataFrame
 
 class FactorAnalysis:
     position = pd.DataFrame()
@@ -82,8 +82,8 @@ class FactorAnalysis:
     
     def _compute_ic(self):
         """计算因子IC值"""
-        ic_df = self.alpha.shift(self.shift_num).corrwith(self.hold_ret, axis=0, method='pearson')
-        rank_ic_df = self.alpha.shift(self.shift_num).corrwith(self.hold_ret, axis=0, method='spearman')
+        ic_df = self.alpha.shift(self.shift_num).corrwith(self.hold_ret, axis=1, method='pearson')
+        rank_ic_df = self.alpha.shift(self.shift_num).corrwith(self.hold_ret, axis=1, method='spearman')
         ir_df = ic_df.rolling(self.ic_rolling).mean() / ic_df.rolling(self.ic_rolling).std()
         
         self.ic = ic_df
@@ -96,7 +96,6 @@ class FactorAnalysis:
         left_group = 1
         df = self.dynamic_df[[left_group, right_group]].copy()
         df['Combo'] = df[right_group] - df[left_group]
-        df['Combo'] = df['Combo'] * np.sign(df['Combo'].iloc[-1])
         
         self.sharpe = my_trading.my_sharpe(df['Combo'])
         self.max_drawdown = my_trading.my_max_drawdown(df['Combo'])
@@ -106,34 +105,38 @@ class FactorAnalysis:
         """
         self.run() 
 
-        fig, axes = plt.subplots(nrows=4, ncols=1, figsize=(15, 12))
-        # 静态图
+        fig, axes = plt.subplots(nrows=5, ncols=1, figsize=(15, 15))
+        # 1. 静态图
         sns.barplot(data=self.static_df, x='groups', y='ret', ax=axes[0], palette='muted')
         axes[0].set_title('Group Returns')
         axes[0].set_xlabel('Groups')
         axes[0].set_ylabel('Returns')
         
-        # 全组动态图
+        # 2. 全组动态图
         sns.lineplot(data=self.dynamic_df.cumsum(), ax=axes[1]) # 累计收益图
         axes[1].set_title('PnL')
-        axes[1].legend(title='PnL Series', bbox_to_anchor=(1.05, 1), loc='upper left')
+        axes[1].legend(title='PnL Series')
         
-        # 最两边组动态图
+        # 3. 最两边组动态图
         right_group = self.num_groups
         left_group = 1
         temp = self.dynamic_df[[left_group, right_group]].copy()
         temp['Combo'] = temp[right_group] - temp[left_group]
-        temp['Combo'] = temp['Combo'] * np.sign(temp['Combo'].iloc[-1])
-        
         sns.lineplot(data=temp.cumsum(), ax=axes[2]) # 累计收益图
         axes[2].set_title('Two Groups PnL')
-        axes[2].legend(title='Two Groups PnL', bbox_to_anchor=(1.05, 1), loc='upper right')
+        axes[2].legend(title='Two Groups PnL')
         
-        # IR柱状图
-        sns.barplot(data=self.ir, ax=axes[3])
-        axes[3].set_title('Rolling IR')
+        # 4. Rolling IC图
+        sns.lineplot(data=self.ic.rolling(self.ic_rolling).mean(), ax=axes[3])
+        axes[3].set_title('Rolling IC')
         axes[3].set_xlabel('Dates')
-        axes[3].set_ylabel('IR')
+        axes[3].set_ylabel('IC')
+        
+        # 5. IR图 
+        sns.lineplot(data=self.ir, ax=axes[4])
+        axes[4].set_title('IR')
+        axes[4].set_xlabel('Dates')
+        axes[4].set_ylabel('IR')
         
         
         plt.tight_layout()
@@ -145,6 +148,7 @@ class FactorAnalysis:
         self._compute_daynamic()
         self._compute_ic()
         self._compute_stats()
+        stats_df = pd.DataFrame(data=[self.sharpe, self.max_drawdown, self.ic.mean()], index=['Combo Sharpe', 'Combo Max Drawdown', 'IC Mean'], columns=['Stats'])
         
         self.report = Report(static_df=self.static_df,
                         dynamic_df=self.dynamic_df,
@@ -152,8 +156,11 @@ class FactorAnalysis:
                         rank_ic=self.rank_ic,
                         ir=self.ir,
                         sharpe=self.sharpe,
-                        max_drawdown=self.max_drawdown)
+                        max_drawdown=self.max_drawdown,
+                        stats=stats_df)
         
+        
+
         return self.report
 
         
