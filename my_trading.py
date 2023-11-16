@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-06 09:58:29
-LastEditTime: 2023-11-15 15:30:27
+LastEditTime: 2023-11-16 15:14:38
 Description: Trading-related Modules
 '''
 import pandas as pd
@@ -40,6 +40,22 @@ def my_sharpe(pnl: pd.DataFrame | pd.Series):
         pnl = pnl.sum(axis=1)
     res = np.round(pnl[pnl.abs() > 0].mean() / pnl[pnl.abs() > 0].std() * 16, 3)
     return res
+
+def my_max_drawdown(pnl) -> pd.Series:
+    '''
+    根据品种计算最大回撤
+    :param pnl: (pd.Series) 
+    :return:
+    '''
+    peak_value = 0
+    max_drawdown = 0
+    cum_pnl = pnl.cumsum()
+    for row in cum_pnl:
+        if row > peak_value:
+            peak_value = row
+        drawdown = peak_value - row
+        max_drawdown = max(drawdown, max_drawdown)
+    return np.round(max_drawdown * 100, 2)
 
 
 
