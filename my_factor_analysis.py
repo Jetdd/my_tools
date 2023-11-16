@@ -76,7 +76,7 @@ class FactorAnalysis:
             sig_df = sig_df.div(self.hold_ret.count(axis=1).shift(-1), axis=0)
             pnl = sig_df * self.hold_ret # 信号已经shift(1), 此处不需要再次shift
             nav = pnl - (sig_df.fillna(0).diff().abs() * self.fee) # 扣除手续费
-            dynamic_df[group] = nav.sum(axis=1).cumsum() # 每日分组累计收益
+            dynamic_df[group] = nav.sum(axis=1) # 每日分组收益
         
         self.dynamic_df = dynamic_df
     
@@ -114,7 +114,7 @@ class FactorAnalysis:
         axes[0].set_ylabel('Returns')
         
         # 全组动态图
-        sns.lineplot(data=self.dynamic_df, ax=axes[1])
+        sns.lineplot(data=self.dynamic_df.cumsum(), ax=axes[1]) # 累计收益图
         axes[1].set_title('PnL')
         axes[1].legend(title='PnL Series', bbox_to_anchor=(1.05, 1), loc='upper left')
         
@@ -125,7 +125,7 @@ class FactorAnalysis:
         temp['Combo'] = temp[right_group] - temp[left_group]
         temp['Combo'] = temp['Combo'] * np.sign(temp['Combo'].iloc[-1])
         
-        sns.lineplot(data=temp, ax=axes[2])
+        sns.lineplot(data=temp.cumsum(), ax=axes[2]) # 累计收益图
         axes[2].set_title('Two Groups PnL')
         axes[2].legend(title='Two Groups PnL', bbox_to_anchor=(1.05, 1), loc='upper right')
         
@@ -146,7 +146,7 @@ class FactorAnalysis:
         self._compute_ic()
         self._compute_stats()
         
-        report = Report(static_df=self.static_df,
+        self.report = Report(static_df=self.static_df,
                         dynamic_df=self.dynamic_df,
                         ic=self.ic,
                         rank_ic=self.rank_ic,
@@ -154,7 +154,7 @@ class FactorAnalysis:
                         sharpe=self.sharpe,
                         max_drawdown=self.max_drawdown)
         
-        return report
+        return self.report
 
         
         
