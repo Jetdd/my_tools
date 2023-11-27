@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-01 15:56:21
-LastEditTime: 2023-11-27 09:13:36
+LastEditTime: 2023-11-27 09:16:41
 Description: Some Useful Plotly Functions (PnL)
 '''
 
@@ -147,7 +147,7 @@ def my_train_test_pnl_plot(train_pnl: pd.DataFrame, test_pnl: pd.DataFrame, plot
     
 
 
-def plot_moving_average_bollinger_bands_with_signals(data, moving_average_period, bollinger_band_width, long_open, long_close, short_open, short_close):
+def my_bbands_signals(data, moving_average_period, bollinger_band_width, long_open, long_close, short_open, short_close):
     # Calculate the moving average
     moving_average = data.rolling(window=moving_average_period).mean()
 
