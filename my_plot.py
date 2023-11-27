@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-01 15:56:21
-LastEditTime: 2023-11-15 15:20:30
+LastEditTime: 2023-11-27 09:13:36
 Description: Some Useful Plotly Functions (PnL)
 '''
 
@@ -9,6 +9,10 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from pathlib import Path
+from datetime import datetime
+
+save_path = Path('D:/projects/plot_html/')
 
 def my_plot_rolling_correlation(futures_df: pd.DataFrame, market_df: pd.Series, rolling_n: int) -> None:
     """
@@ -33,7 +37,7 @@ def my_plot_rolling_correlation(futures_df: pd.DataFrame, market_df: pd.Series, 
                   color='variable',
                   labels={'value': 'Correlation'},
                   title=f"Rolling {rolling_n}-day correlation with Market Return")
-    fig.show()
+    fig.write_html(save_path / 'plot.html')
 
 
 def my_plot_price_trend(futures_df: pd.DataFrame) -> None:
@@ -57,7 +61,7 @@ def my_plot_price_trend(futures_df: pd.DataFrame) -> None:
                   y='value',
                   color='variable',
                   title='Normalized Trend of Futures Close Prices')
-    fig.show()
+    fig.write_html(save_path / 'plot.html')
 
 
 def my_line_plot(futures_df: pd.DataFrame, title='Line Plot') -> None:
@@ -75,7 +79,7 @@ def my_line_plot(futures_df: pd.DataFrame, title='Line Plot') -> None:
                   y='value',
                   color='variable',
                   title=title)
-    fig.show()
+    fig.write_html(save_path / 'plot.html')
 
 
 def my_scatter_plot(futures_df: pd.DataFrame, title='Scatter Plot') -> None:
@@ -93,7 +97,7 @@ def my_scatter_plot(futures_df: pd.DataFrame, title='Scatter Plot') -> None:
                      y='value',
                      color='variable',
                      title=title)
-    fig.show()
+    fig.write_html(save_path / 'plot.html')
 
 
 def my_pnl_plot(pnl: pd.DataFrame | pd.Series, *args):
@@ -109,8 +113,8 @@ def my_pnl_plot(pnl: pd.DataFrame | pd.Series, *args):
     fig.update_layout(title=title)
     
     # Show the plot
-    fig.show()
-    return 
+    fig.write_html(save_path / 'plot.html')
+    
 
 def my_train_test_pnl_plot(train_pnl: pd.DataFrame, test_pnl: pd.DataFrame, plot_title: str):
     # Create a subplot figure with 2 rows
@@ -139,5 +143,43 @@ def my_train_test_pnl_plot(train_pnl: pd.DataFrame, test_pnl: pd.DataFrame, plot
     fig.update_yaxes(title_text="Cumulative PnL")
 
     # Show the plot
+    fig.write_html(save_path / 'plot.html')
+    
+
+
+def plot_moving_average_bollinger_bands_with_signals(data, moving_average_period, bollinger_band_width, long_open, long_close, short_open, short_close):
+    # Calculate the moving average
+    moving_average = data.rolling(window=moving_average_period).mean()
+
+    # Calculate the standard deviation
+    std_dev = data.rolling(window=moving_average_period).std()
+
+    # Calculate the upper and lower Bollinger Bands
+    upper_band = moving_average + (bollinger_band_width * std_dev)
+    lower_band = moving_average - (bollinger_band_width * std_dev)
+
+    # Create traces for the price, moving average, and Bollinger Bands
+    price_trace = go.Scatter(x=data.index, y=data, mode='lines', name='Price', line=dict(color='blue'))
+    ma_trace = go.Scatter(x=data.index, y=moving_average, mode='lines', name='Moving Average', line=dict(color='green', dash='dot'))
+    upper_band_trace = go.Scatter(x=data.index, y=upper_band, mode='lines', name='Upper Bollinger Band', line=dict(color='red'))
+    lower_band_trace = go.Scatter(x=data.index, y=lower_band, mode='lines', name='Lower Bollinger Band', line=dict(color='purple'))
+
+    # Traces for trading signals
+    long_open_trace = go.Scatter(x=long_open.index, y=data[long_open == 1], mode='markers', name='Long Open', marker=dict(color='lime', size=10, symbol='triangle-up'))
+    long_close_trace = go.Scatter(x=long_close.index, y=data[long_close == 1], mode='markers', name='Long Close', marker=dict(color='green', size=10, symbol='triangle-down'))
+    short_open_trace = go.Scatter(x=short_open.index, y=data[short_open == 1], mode='markers', name='Short Open', marker=dict(color='magenta', size=10, symbol='triangle-up'))
+    short_close_trace = go.Scatter(x=short_close.index, y=data[short_close == 1], mode='markers', name='Short Close', marker=dict(color='purple', size=10, symbol='triangle-down'))
+
+    # Fill between Bollinger Bands
+    fill_trace = go.Scatter(x=data.index.tolist() + data.index[::-1].tolist(),
+                            y=upper_band.tolist() + lower_band[::-1].tolist(),
+                            fill='toself', fillcolor='rgba(128, 128, 128, 0.3)', line=dict(color='rgba(255,255,255,0)'),
+                            name='Bollinger Band Area')
+
+    # Define the layout
+    layout = go.Layout(title='Moving Average and Bollinger Bands with Trading Signals', xaxis_title='Date', yaxis_title='Price', legend=dict(x=0.05, y=0.95))
+
+    # Combine all traces and layout in a figure
+    fig = go.Figure(data=[price_trace, ma_trace, upper_band_trace, lower_band_trace, fill_trace, long_open_trace, long_close_trace, short_open_trace, short_close_trace], layout=layout)
+
     fig.show()
-    return
