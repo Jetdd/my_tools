@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-01 15:56:21
-LastEditTime: 2023-11-27 09:16:41
+LastEditTime: 2023-11-27 10:15:28
 Description: Some Useful Plotly Functions (PnL)
 '''
 
@@ -146,6 +146,35 @@ def my_train_test_pnl_plot(train_pnl: pd.DataFrame, test_pnl: pd.DataFrame, plot
     fig.write_html(save_path / 'plot.html')
     
 
+def my_bbands(data, moving_average_period, bollinger_band_width):
+    # Calculate the moving average
+    moving_average = data.rolling(window=moving_average_period).mean()
+
+    # Calculate the standard deviation
+    std_dev = data.rolling(window=moving_average_period).std()
+
+    # Calculate the upper and lower Bollinger Bands
+    upper_band = moving_average + (bollinger_band_width * std_dev)
+    lower_band = moving_average - (bollinger_band_width * std_dev)
+
+    # Create traces for the plot
+    price_trace = go.Scatter(x=data.index, y=data, mode='lines', name='Price', line=dict(color='blue'))
+    ma_trace = go.Scatter(x=data.index, y=moving_average, mode='lines', name='Moving Average', line=dict(color='green', dash='dot'))
+    upper_band_trace = go.Scatter(x=data.index, y=upper_band, mode='lines', name='Upper Bollinger Band', line=dict(color='red'))
+    lower_band_trace = go.Scatter(x=data.index, y=lower_band, mode='lines', name='Lower Bollinger Band', line=dict(color='purple'))
+    fill_trace = go.Scatter(x=data.index.tolist() + data.index[::-1].tolist(),
+                            y=upper_band.tolist() + lower_band[::-1].tolist(),
+                            fill='toself', fillcolor='rgba(128, 128, 128, 0.3)', line=dict(color='rgba(255,255,255,0)'),
+                            name='Bollinger Band Area')
+
+    # Define the layout
+    layout = go.Layout(title='Moving Average and Bollinger Bands', xaxis_title='Date', yaxis_title='Price', legend=dict(x=0.05, y=0.95))
+
+    # Combine the traces and layout in a figure
+    fig = go.Figure(data=[price_trace, ma_trace, upper_band_trace, lower_band_trace, fill_trace], layout=layout)
+
+    fig.write_html(save_path / 'plot.html')
+
 
 def my_bbands_signals(data, moving_average_period, bollinger_band_width, long_open, long_close, short_open, short_close):
     # Calculate the moving average
@@ -182,4 +211,42 @@ def my_bbands_signals(data, moving_average_period, bollinger_band_width, long_op
     # Combine all traces and layout in a figure
     fig = go.Figure(data=[price_trace, ma_trace, upper_band_trace, lower_band_trace, fill_trace, long_open_trace, long_close_trace, short_open_trace, short_close_trace], layout=layout)
 
-    fig.show()
+    fig.write_html(save_path / 'plot.html')
+    
+
+def my_double_moving_average(data, long_ma_period, short_ma_period):
+    # Calculate long and short moving averages
+    long_ma = data.rolling(window=long_ma_period).mean()
+    short_ma = data.rolling(window=short_ma_period).mean()
+
+    # Create traces
+    price_trace = go.Scatter(x=data.index, y=data, mode='lines', name='Price', line=dict(color='blue'))
+    long_ma_trace = go.Scatter(x=data.index, y=long_ma, mode='lines', name=f'Long MA ({long_ma_period})', line=dict(color='red', dash='dash'))
+    short_ma_trace = go.Scatter(x=data.index, y=short_ma, mode='lines', name=f'Short MA ({short_ma_period})', line=dict(color='green', dash='dot'))
+
+    # Define the layout
+    layout = go.Layout(title='Double Moving Averages', xaxis_title='Date', yaxis_title='Price', legend=dict(x=0.05, y=0.95))
+
+    # Combine all traces and layout in a figure
+    fig = go.Figure(data=[price_trace, long_ma_trace, short_ma_trace], layout=layout)
+
+    fig.write_html(save_path / 'plot.html')
+
+def my_triple_moving_average(data, short_ma_period, medium_ma_period, long_ma_period):
+    # Calculate short, medium, and long moving averages
+    short_ma = data.rolling(window=short_ma_period).mean()
+    medium_ma = data.rolling(window=medium_ma_period).mean()
+    long_ma = data.rolling(window=long_ma_period).mean()
+
+    # Create traces
+    price_trace = go.Scatter(x=data.index, y=data, mode='lines', name='Price', line=dict(color='blue'))
+    short_ma_trace = go.Scatter(x=data.index, y=short_ma, mode='lines', name=f'Short MA ({short_ma_period})', line=dict(color='green', dash='dot'))
+    medium_ma_trace = go.Scatter(x=data.index, y=medium_ma, mode='lines', name=f'Medium MA ({medium_ma_period})', line=dict(color='orange', dash='dashdot'))
+    long_ma_trace = go.Scatter(x=data.index, y=long_ma, mode='lines', name=f'Long MA ({long_ma_period})', line=dict(color='red', dash='dash'))
+
+    # Define the layout
+    layout = go.Layout(title='Triple Moving Averages', xaxis_title='Date', yaxis_title='Price', legend=dict(x=0.05, y=0.95))
+
+    # Combine all traces and layout in a figure
+    fig = go.Figure(data=[price_trace, short_ma_trace, medium_ma_trace, long_ma_trace], layout=layout)
+    fig.write_html(save_path / 'plot.html')
