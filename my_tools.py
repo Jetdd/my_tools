@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2023-11-15 15:30:04
+LastEditTime: 2023-12-22 16:33:57
 Description: Tool functions, including backtesting, plotting
 '''
 import pandas as pd
@@ -69,19 +69,19 @@ def my_load_data_2(need: list, freq: str, adj: bool) -> dict:
     if adj:
         adj = 'adj'
     else:
-        adj = 'unadj'
+        adj = 'no_adj'
     if freq == 'day':
         for tp in need:
-            dd = pd.read_pickle('D:/projects/data/daybar/{}/{}.pkl'.format(adj, tp)).reset_index().set_index('date')
+            dd = pd.read_pickle('D:/projects/data/future/1d/dominant/{}/{}.pkl'.format(adj, tp)).reset_index().set_index('date')
             data_dict[tp] = dd
     elif freq == '30m':
         for tp in need:
-            dd = pd.read_pickle('D:/projects/data/minbar/30min/{}/{}.pkl'.format(adj, tp)).reset_index().set_index('datetime')
+            dd = pd.read_pickle('D:/projects/data/future/30m/dominant/{}/{}.pkl'.format(adj, tp)).reset_index().set_index('datetime')
             data_dict[tp] = dd
     
     elif freq == '1m':
         for tp in need:
-            dd = pd.read_pickle('D:/projects/data/minbar/1min/{}/{}.pkl'.format(adj, tp)).reset_index().set_index('datetime')
+            dd = pd.read_pickle('D:/projects/data/future/1m/dominant/{}/{}.pkl'.format(adj, tp)).reset_index().set_index('datetime')
             data_dict[tp] = dd
     
     return data_dict
@@ -146,7 +146,7 @@ def my_dataframe(data_dict: dict, string: str) -> pd.DataFrame:
     '''
     res_list = []
     for tp in data_dict:
-        res_list.append(data_dict[tp][string].to_frame().rename({string:tp}, axis=1))
+        res_list.append(data_dict[tp][string].rename(tp).drop_duplicates())
     res = pd.concat(res_list, axis=1)
     return res
 def my_concat_data_dict(data_dict: dict) -> pd.DataFrame:
