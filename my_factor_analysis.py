@@ -100,7 +100,7 @@ class FactorAnalysis:
         self.sharpe = my_trading.my_sharpe(df['Combo'])
         self.max_drawdown = my_trading.my_max_drawdown(df['Combo'])
         
-    def plot(self):
+    def plot(self, suptitle='Factor Analysis'):
         """分组平均收益图, 分组动态图, 多空最大最小两组收益图
         """
         self.run() 
@@ -140,6 +140,7 @@ class FactorAnalysis:
         
         
         plt.tight_layout()
+        plt.suptitle(suptitle)
         plt.show()
     
     def run(self) -> (pd.DataFrame, pd.DataFrame):
