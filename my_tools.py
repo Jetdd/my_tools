@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-01-02 13:51:35
+LastEditTime: 2024-01-02 16:59:55
 Description: Tool functions, including backtesting, plotting
 '''
 import pandas as pd
@@ -61,7 +61,7 @@ def my_load_data_uniform_time(need: list, freq: str, adj: bool) -> dict:
                  
     return data_dict
 
-def my_load_data_2(need: list, freq: str, adj: bool) -> dict:
+def my_load_data_2(need: list, dominant: str, freq: str, adj: bool) -> dict:
     '''
     Given types of futures, we load all data to a dictionary
     '''
@@ -72,16 +72,16 @@ def my_load_data_2(need: list, freq: str, adj: bool) -> dict:
         adj = 'no_adj'
     if freq == 'day':
         for tp in need:
-            dd = pd.read_pickle('D:/projects/data/future/1d/dominant/{}/{}.pkl'.format(adj, tp)).reset_index().set_index('date')
+            dd = pd.read_pickle('D:/projects/data/future/1d/{}/{}/{}.pkl'.format(adj, dominant, tp)).reset_index().set_index('date')
             data_dict[tp] = dd
     elif freq == '30m':
         for tp in need:
-            dd = pd.read_pickle('D:/projects/data/future/30m/dominant/{}/{}.pkl'.format(adj, tp)).reset_index().set_index('datetime')
+            dd = pd.read_pickle('D:/projects/data/future/30m/{}/{}/{}.pkl'.format(adj, dominant, tp)).reset_index().set_index('datetime')
             data_dict[tp] = dd
     
     elif freq == '1m':
         for tp in need:
-            dd = pd.read_pickle('D:/projects/data/future/1m/dominant/{}/{}.pkl'.format(adj, tp)).reset_index().set_index('datetime')
+            dd = pd.read_pickle('D:/projects/data/future/1m/{}/{}/{}.pkl'.format(adj, dominant, tp)).reset_index().set_index('datetime')
             data_dict[tp] = dd
     
     return data_dict
