@@ -30,7 +30,7 @@ class FactorAnalysis:
         start_time = kwargs.get('start_time', '20100104')
         self.method = norm_method
         self.num_groups = num_groups
-        self.shift_num = kwargs.get('shift', 1) # 默认Alpha对应下一期收益
+        self.shift_num = kwargs.get('shift_num', 1) # 默认Alpha对应下一期收益
         self.fee = kwargs.get('fee', 2e-4)  # 默认手续费为万2
         self.window = kwargs.get("window", 240)
         self.ic_rolling = kwargs.get('ic_rolling', 30) # 计算IR的窗口
@@ -96,8 +96,9 @@ class FactorAnalysis:
         left_group = 1
         df = self.dynamic_df[[left_group, right_group]].copy()
         df['Combo'] = df[right_group] - df[left_group]
+        self.alpha_sign = np.sign(df['Combo'].cumsum().values[-1])
         
-        self.sharpe = my_trading.my_sharpe(df['Combo'])
+        self.sharpe = my_trading.my_sharpe(df['Combo'] * self.alpha_sign)
         self.max_drawdown = my_trading.my_max_drawdown(df['Combo'])
         
     def plot(self, suptitle='Factor Analysis'):
@@ -122,7 +123,8 @@ class FactorAnalysis:
         left_group = 1
         temp = self.dynamic_df[[left_group, right_group]].copy()
         temp['Combo'] = temp[right_group] - temp[left_group]
-        sns.lineplot(data=temp.cumsum(), ax=axes[2]) # 累计收益图
+        sns.lineplot(data=temp.cumsum() * np.sign(temp.cumsum().values[-1]), # alpha sign 调整方向
+                     ax=axes[2]) # 累计收益图
         axes[2].set_title('Two Groups PnL')
         axes[2].legend(title='Two Groups PnL')
         
@@ -140,7 +142,7 @@ class FactorAnalysis:
         
         
         plt.tight_layout()
-        plt.suptitle(suptitle)
+        plt.suptitle(suptitle, x=0.5, y=1.02, fontsize=20)
         plt.show()
     
     def run(self) -> (pd.DataFrame, pd.DataFrame):
@@ -149,7 +151,12 @@ class FactorAnalysis:
         self._compute_daynamic()
         self._compute_ic()
         self._compute_stats()
-        stats_df = pd.DataFrame(data=[self.sharpe, self.max_drawdown, self.ic.mean()], index=['Combo Sharpe', 'Combo Max Drawdown', 'IC Mean'], columns=['Stats'])
+        stats_df = pd.DataFrame(data=[np.round(self.sharpe, 3), 
+                                      f"{np.round(self.max_drawdown, 4)}%", 
+                                      np.round(self.ic.mean(), 4), 
+                                      int(self.alpha_sign)], 
+                                index=['Combo Sharpe', 'Combo Max Drawdown', 'IC Mean', 'Alpha Sign'], 
+                                columns=['Stats'])
         
         self.report = Report(static_df=self.static_df,
                         dynamic_df=self.dynamic_df,

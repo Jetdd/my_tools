@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2023-12-22 16:33:57
+LastEditTime: 2024-01-02 13:51:35
 Description: Tool functions, including backtesting, plotting
 '''
 import pandas as pd
@@ -146,9 +146,11 @@ def my_dataframe(data_dict: dict, string: str) -> pd.DataFrame:
     '''
     res_list = []
     for tp in data_dict:
-        res_list.append(data_dict[tp][string].rename(tp).drop_duplicates())
+        series = data_dict[tp][string].rename(tp)
+        res_list.append(series[~series.index.duplicated(keep='first')])
     res = pd.concat(res_list, axis=1)
     return res
+
 def my_concat_data_dict(data_dict: dict) -> pd.DataFrame:
     first_key = next(iter(data_dict))
     df = data_dict[first_key].rename({'underlying_symbol': 'types'}, axis=1)
