@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-01 15:56:21
-LastEditTime: 2023-11-27 10:15:28
+LastEditTime: 2024-01-03 09:41:05
 Description: Some Useful Plotly Functions (PnL)
 '''
 
@@ -146,7 +146,7 @@ def my_train_test_pnl_plot(train_pnl: pd.DataFrame, test_pnl: pd.DataFrame, plot
     fig.write_html(save_path / 'plot.html')
     
 
-def my_bbands(data, moving_average_period, bollinger_band_width):
+def my_bbands(data, moving_average_period, bollinger_band_width, title='Moving Average and Bollinger Bands'):
     # Calculate the moving average
     moving_average = data.rolling(window=moving_average_period).mean()
 
@@ -168,7 +168,7 @@ def my_bbands(data, moving_average_period, bollinger_band_width):
                             name='Bollinger Band Area')
 
     # Define the layout
-    layout = go.Layout(title='Moving Average and Bollinger Bands', xaxis_title='Date', yaxis_title='Price', legend=dict(x=0.05, y=0.95))
+    layout = go.Layout(title=title, xaxis_title='Date', yaxis_title='Price', legend=dict(x=0.05, y=0.95))
 
     # Combine the traces and layout in a figure
     fig = go.Figure(data=[price_trace, ma_trace, upper_band_trace, lower_band_trace, fill_trace], layout=layout)
