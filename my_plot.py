@@ -173,7 +173,7 @@ def my_bbands(data, moving_average_period, bollinger_band_width, title='Moving A
     # Combine the traces and layout in a figure
     fig = go.Figure(data=[price_trace, ma_trace, upper_band_trace, lower_band_trace, fill_trace], layout=layout)
 
-    fig.write_html(save_path / 'plot.html')
+    fig.write_html(save_path / f'{title}_plot.html')
 
 
 def my_bbands_signals(data, moving_average_period, bollinger_band_width, long_open, long_close, short_open, short_close):
