@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-01 15:56:21
-LastEditTime: 2024-01-03 09:41:05
+LastEditTime: 2024-01-03 10:26:19
 Description: Some Useful Plotly Functions (PnL)
 '''
 
@@ -79,7 +79,7 @@ def my_line_plot(futures_df: pd.DataFrame, title='Line Plot') -> None:
                   y='value',
                   color='variable',
                   title=title)
-    fig.write_html(save_path / 'plot.html')
+    fig.write_html(save_path / f'{title}_lineplot.html')
 
 
 def my_scatter_plot(futures_df: pd.DataFrame, title='Scatter Plot') -> None:
