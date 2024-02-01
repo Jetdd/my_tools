@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-02-01 11:02:27
+LastEditTime: 2024-02-01 11:03:32
 Description: Tool functions, including backtesting, plotting
 '''
 import pandas as pd
@@ -200,7 +200,7 @@ def my_hold_ret(data_dict: dict, shift_num: int=1) -> pd.DataFrame:
     close_hot = my_dataframe(data_dict=data_dict, string='close')
     open_hot = my_dataframe(data_dict=data_dict, string='open')
     ret = open_hot.shift(-shift_num) / open_hot - 1
-    ret.iloc[-1, :] = close_hot.iloc[-1, :] / open_hot.iloc[-1, :] - 1
+    ret.iloc[-1, :] = close_hot.iloc[-1, :] / open_hot.iloc[-shift_num, :] - 1
     return ret.replace(np.inf, np.nan)
 
 def my_ret(data_dict: dict) -> pd.DataFrame:
