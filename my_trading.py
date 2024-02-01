@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-06 09:58:29
-LastEditTime: 2023-11-16 16:05:58
+LastEditTime: 2024-01-31 14:42:27
 Description: Trading-related Modules
 '''
 import pandas as pd
@@ -38,7 +38,7 @@ def my_signal(long_open: pd.DataFrame,
 def my_sharpe(pnl: pd.DataFrame | pd.Series):
     if isinstance(pnl, pd.DataFrame):
         pnl = pnl.sum(axis=1)
-    res = np.round(pnl[pnl.abs() > 0].mean() / pnl[pnl.abs() > 0].std() * 16, 3)
+    res = np.round(pnl.mean() / pnl.std() * 16, 3)
     return res
 
 def my_max_drawdown(pnl) -> pd.Series:
