@@ -111,10 +111,10 @@ class FactorAnalysis:
         fee_df = pd.DataFrame()  # 手续费
         for group in range(1, self.num_groups+1):
             sig_df = self.static_df[self.static_df['groups'] == group]['alpha'].unstack()
-            sig_df = sig_df.div(sig_df.count(axis=1), axis=0)  # 截面中性化
+            # sig_df = sig_df.div(sig_df.count(axis=1), axis=0)  # 截面中性化
             sig_df[~sig_df.isnull()] = 1 # 规则化信号, 将因子值转换为0/1
             # sig_df = sig_df.div(self.hold_ret.count(axis=1).shift(-1), axis=0)
-            sig_df = sig_df.div(sig_df.count(axis=1).shift(-1), axis=0)  # 对仓位进行截面中性化
+            sig_df = sig_df.div(sig_df.count(axis=1).shift(-1), axis=0) / 2# 对仓位进行截面中性化
             pnl = sig_df * self.hold_ret # 信号已经shift(1), 此处不需要再次shift
             fee_df[group] = (sig_df.fillna(0).diff().abs() * self.fee).sum(axis=1) # 手续费
             dynamic_df[group] = pnl.sum(axis=1) # 每日分组收益

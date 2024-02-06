@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2023-11-15 15:19:49
+LastEditTime: 2024-02-01 17:30:40
 Description: Time Series and Cross Sectional Operators
 '''
 
@@ -236,6 +236,15 @@ def cross_cut(x: pd.DataFrame, cut: float) -> pd.DataFrame:
     res[res <= -cut] = -1
     res[res.abs() < cut] = 0
     return res
+
+def cross_mad(x: pd.DataFrame, cut: int=3) -> pd.DataFrame:
+    """截面中位数去极值"""
+    median_x = x.median(axis=1)
+    abs_dev_x = (x - median_x.values[:, None]).abs().median(axis=1)
+    upper = median_x + abs_dev_x * cut
+    lower = median_x - abs_dev_x * cut
+    norm_x = x.clip(lower=lower.values, upper=upper.values, axis=0)
+    return norm_x
 
 def cross_rank(x):
     if isinstance(x, pd.Series):

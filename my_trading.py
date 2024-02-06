@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-06 09:58:29
-LastEditTime: 2024-01-31 14:42:27
+LastEditTime: 2024-02-05 16:23:15
 Description: Trading-related Modules
 '''
 import pandas as pd
@@ -79,8 +79,8 @@ def my_neutralize(alpha: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: alpha
     """
-    alpha[alpha > 0] = alpha[alpha > 0] / (alpha>0).sum(axis=1).values[:, None]
-    alpha[alpha < 0] = alpha[alpha < 0] / (alpha<0).sum(axis=1).values[:, None]
+    alpha[alpha > 0] = alpha[alpha > 0] / alpha[alpha > 0].sum(axis=1).values[:, None] * 0.5
+    alpha[alpha < 0] = -alpha[alpha < 0] / alpha[alpha < 0].sum(axis=1).values[:, None] * 0.5
     
     return alpha
 
