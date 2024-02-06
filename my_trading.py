@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-06 09:58:29
-LastEditTime: 2024-02-05 16:23:15
+LastEditTime: 2024-02-06 14:21:01
 Description: Trading-related Modules
 '''
 import pandas as pd
@@ -57,7 +57,9 @@ def my_max_drawdown(pnl) -> pd.Series:
         max_drawdown = max(drawdown, max_drawdown)
     return np.round(max_drawdown * 100, 2)
 
-
+def my_turnover(pos: pd.DataFrame):
+    res = (pos.diff(1).abs().sum(axis=1)/(pos.abs().sum(axis=1).shift(1))).mean()
+    return res
 
 """ OTHERS """
 def my_vol_improve(alpha: pd.DataFrame, ret_df: pd.DataFrame) -> pd.DataFrame:
