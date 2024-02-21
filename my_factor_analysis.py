@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from dataclasses import dataclass
-
+from typing import Union
 
 @dataclass
 class Report:
@@ -198,7 +198,7 @@ class FactorAnalysis:
         plt.suptitle(suptitle, x=0.5, y=1.02, fontsize=20)
         plt.show()
     
-    def run(self) -> (pd.DataFrame, pd.DataFrame):
+    def run(self) -> Union[pd.DataFrame, pd.DataFrame]:
         self._get_positions()
         self._compute_static()
         self._compute_ts_dynamic()
