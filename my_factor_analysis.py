@@ -162,7 +162,7 @@ class FactorAnalysis:
         axes[0, 0].set_ylabel('Returns')
         
         # 2. 全品种时序动态图
-        sns.lineplot(data=self.ts_cumpnl.sum(axis=1), ax=axes[1, 0])
+        sns.lineplot(data=self.ts_cumpnl.sum(axis=1), color='red', ax=axes[1, 0])
         axes[1, 0].set_title('Time Series PnL')
         axes[1, 0].set_xlabel('Dates')
         
