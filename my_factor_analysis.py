@@ -177,7 +177,7 @@ class FactorAnalysis:
         temp = self.dynamic_df[[left_group, right_group]].copy()
         temp['Combo'] = temp[right_group] - temp[left_group]
         sns.lineplot(data=temp['Combo'].cumsum() * np.sign(temp['Combo'].cumsum().values[-1]), # alpha sign 调整方向
-                     palette=['g'],
+                     color='green',
                      ax=axes[1, 1]) # 累计收益图
         axes[1, 1].set_title('Two Groups PnL')
         # axes[1, 1].legend(title='Two Groups PnL')
