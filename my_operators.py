@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-02-01 17:30:40
+LastEditTime: 2024-03-01 13:45:06
 Description: Time Series and Cross Sectional Operators
 '''
 
@@ -41,7 +41,10 @@ def rolling_zscore(x, window):
     norm_x[norm_x < -3] = -3
     return norm_x
 
-
+def rolling_mad(x, window, cut=3):
+    raise NotImplementedError("rolling_mad is not implemented yet")
+    
+    
 def rolling_rank(x, window):
     if isinstance(x, pd.Series):
         return pd.Series(bn.move_rank(x.T, window, min_count=1).T, index=x.index, name=x.name)
