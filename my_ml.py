@@ -65,8 +65,6 @@ class MLTrainFit:
             self.end_date = kwargs.get(
                 "end_date", "2023-07-01"
             )  # Rolling Window End Date
-        else:
-            raise ValueError("Rolling Train Needs More Parameters!")
 
         self.shift_num = kwargs.get(
             "shift_num", 10
@@ -74,7 +72,6 @@ class MLTrainFit:
         self.train_test_size = kwargs.get("train_test_size", 0.8)
         self.model_params = kwargs.get("model_params", {})
 
-        
     def fit_predict(self):
         if self.train_method == None:
             return self._fit_predict()
@@ -84,11 +81,11 @@ class MLTrainFit:
             return self._expanding_fit_predict()
         else:
             raise ValueError("Train Method Not Supported!")
-        
+
     def _split_train_test(self):
         """Split train and test data based on size"""
         # TimeSeriesSplit
-        if isinstance(self.retrain_freq, pd.Timedelta):
+        if isinstance(self.y.index, pd.DatetimeIndex):
             y_index = self.y.index.unique()
             train_split_date = y_index[int(len(y_index) * self.train_test_size)]
             test_split_date = y_index[
@@ -111,7 +108,7 @@ class MLTrainFit:
     def _model(self):
         """Initialize model"""
         if isinstance(self.model, str):
-            model = eval(self.model)
+            model = eval(self.model)(**self.model_params)
         else:
             model = self.model
         return model
@@ -145,15 +142,19 @@ class MLTrainFit:
             train_X_ = train_X[train_X.index <= train_end_date]
             train_y_ = train_y[train_y.index <= train_end_date]
 
-            test_start_date= train_end_date + pd.Timedelta(
+            test_start_date = train_end_date + pd.Timedelta(
                 self.shift_num / 5 * 7, unit="D"
             )  # Convert the shift_num to trading days
             if i == len(split_dates) - 2:
                 test_end_date = self.end_date
             else:
                 test_end_date = split_dates[i + 1]
-            test_X_ = test_X[(test_X.index > test_start_date) & (test_X.index <= test_end_date)]
-            test_y_ = test_y[(test_y.index > test_start_date) & ((test_X.index <= test_end_date))]
+            test_X_ = test_X[
+                (test_X.index > test_start_date) & (test_X.index <= test_end_date)
+            ]
+            test_y_ = test_y[
+                (test_y.index > test_start_date) & ((test_X.index <= test_end_date))
+            ]
             try:
                 model.fit(train_X_, train_y_, **self.model_params)
                 pred = model.predict(test_X_)
@@ -167,32 +168,40 @@ class MLTrainFit:
         train_X, test_X, train_y, test_y = self._split_train_test()
 
         start_idx = test_y.index[0]
-        split_dates = pd.date_range(
-            start_idx, self.end_date, freq=self.retrain_freq
-        )
-        
-        
+        split_dates = pd.date_range(start_idx, self.end_date, freq=self.retrain_freq)
+
+
 class PrepareXY:
-    def __init__(self, alpha_dict: dict, target: pd.DataFrame, align_method: str="inner") -> None:
+    def __init__(
+        self,
+        alpha_dict: dict,
+        target: pd.DataFrame,
+        norm_X: callable,
+        align_method: str = "inner",
+        **kwargs,
+    ) -> None:
         self.alpha_dict = alpha_dict
         self.target = target
+        self.norm_X = norm_X
+        self.norm_params = kwargs.get("norm_params", {})
         self.align_method = align_method
-    
+
     def alpha_to_X(self) -> pd.DataFrame:
         """Convert my alpha_dict to dataframe for ML training
-        
+
         Returns:
             pd.DataFrame: columns=[factor], index=datetime
         """
         alpha_list = []
         factor_names = []
         for factor_name, factor in self.alpha_dict.items():
+            factor = self.norm_X(factor, **self.norm_params)
             factor = factor.stack(dropna=False)
             alpha_list.append(factor)
             factor_names.append(factor_name)
         X = pd.concat(alpha_list, axis=1, keys=factor_names)
         return X
-    
+
     def target_to_Y(self) -> pd.Series:
         """Convert my target to pd.series for ML training
 
@@ -200,12 +209,12 @@ class PrepareXY:
             pd.Series: index=[date/datetime, tp/product]
         """
         return self.target.stack(dropna=False)
-    
+
     def align_X_Y(self) -> Union[pd.DataFrame, pd.Series]:
         X = self.alpha_to_X()
         Y = self.target_to_Y()
         Y, X = Y.align(X, join=self.align_method)
         return X, Y
-    
+
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         return self.align_X_Y()

@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-06 09:58:29
-LastEditTime: 2024-02-06 14:21:01
+LastEditTime: 2024-03-11 11:07:30
 Description: Trading-related Modules
 '''
 import pandas as pd
@@ -47,14 +47,12 @@ def my_max_drawdown(pnl) -> pd.Series:
     :param pnl: (pd.Series) 
     :return:
     '''
-    peak_value = 0
-    max_drawdown = 0
+    peak_value = -np.inf
+    max_drawdown = -np.inf
     cum_pnl = pnl.cumsum()
     for row in cum_pnl:
-        if row > peak_value:
-            peak_value = row
-        drawdown = peak_value - row 
-        max_drawdown = max(drawdown, max_drawdown)
+        peak_value = max(peak_value, row)
+        max_drawdown = max(max_drawdown, peak_value - row)
     return np.round(max_drawdown * 100, 2)
 
 def my_turnover(pos: pd.DataFrame):
