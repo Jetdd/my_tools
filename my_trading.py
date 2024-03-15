@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-06 09:58:29
-LastEditTime: 2024-03-11 11:07:30
+LastEditTime: 2024-03-14 22:15:59
 Description: Trading-related Modules
 '''
 import pandas as pd
@@ -52,9 +52,9 @@ def my_max_drawdown(pnl) -> pd.Series:
     cum_pnl = pnl.cumsum()
     for row in cum_pnl:
         peak_value = max(peak_value, row)
-        max_drawdown = max(max_drawdown, peak_value - row)
+        max_drawdown = max(max_drawdown, (peak_value - row))
     return np.round(max_drawdown * 100, 2)
-
+                    
 def my_turnover(pos: pd.DataFrame):
     res = (pos.diff(1).abs().sum(axis=1)/(pos.abs().sum(axis=1).shift(1))).mean()
     return res
@@ -113,3 +113,19 @@ def my_normalize(alpha: pd.DataFrame, method: str, **kwargs) -> pd.DataFrame:
     else:
         normed_alpha = normed_alpha
     return normed_alpha
+
+def my_stop_loss(pnl: pd.Series) -> pd.Series:
+    """移动止损, 输出止损后的出场信号, 需进行重新回测
+
+    Args:
+        pnl (pd.Series): 原策略的pnl
+
+    Returns:
+        pd.Series: 止损后的出场信号
+    """
+    new_signal = pd.Series(np.full(pnl.shape, np.nan), index=pnl.index)
+    max_dd_series = pd.Series(np.full(pnl.shape, np.nan), index=pnl.index)
+    peak_value = -np.inf
+    for i in range(pnl.shape[0]):
+        peak_value = max(peak_value, pnl.iloc[i])
+        max_dd_series.iloc[i] = peak_value

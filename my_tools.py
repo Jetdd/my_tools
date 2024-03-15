@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-02-01 11:03:32
+LastEditTime: 2024-03-15 14:15:08
 Description: Tool functions, including backtesting, plotting
 '''
 import pandas as pd
@@ -112,6 +112,13 @@ def get_ferrous_list() -> list:
     steel = ['RB', 'HC', 'I', 'J', 
          'JM', 'SF', 'SM', ]
     return steel
+
+def get_oil_universe() -> list:
+    return ["CF", "CY", "SR"]
+
+def get_grain_universe() -> list:
+    return ["A", "B", "C"]
+
 def get_universe() -> list:
     universe = ["M","RM","P","Y","OI","B","C","CS","A",
             "JD","SR","CF","AP","AL","CU","ZN","NI",
@@ -121,7 +128,6 @@ def get_universe() -> list:
             "V","FG","NR","RU","AU","AG", 'SP', 'CJ', 
             'PK', 'LH',] 
     return universe
-
 
 def get_universe_pool() -> dict:
     res = {}
