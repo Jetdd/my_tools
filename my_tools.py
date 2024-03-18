@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-03-15 14:15:08
+LastEditTime: 2024-03-18 10:51:16
 Description: Tool functions, including backtesting, plotting
 '''
 import pandas as pd
@@ -85,6 +85,9 @@ def my_load_data_2(need: list, dominant: str, freq: str, adj: bool) -> dict:
             data_dict[tp] = dd
     
     return data_dict
+
+def my_future_info():
+    table = pd.read_csv("D:/projects/data/future/info.csv")
 
 def get_agr_list() -> list:
     res = ['A', 'B', 'P', 'Y', 'OI', 'M', 
