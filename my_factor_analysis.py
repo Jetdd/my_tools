@@ -329,5 +329,5 @@ def equal_weight_alpha(alpha_list: list, norm_method: str="ts", **kwargs) -> pd.
         
     alpha = 0
     for a in alpha_list:
-        alpha += norm_func(a, **kwargs)
+        alpha += norm_func(a, **kwargs).fillna(0)  # fillna(0)避免有一些品种没有当前因子导致全部变成nan
     return alpha / len(alpha_list)
