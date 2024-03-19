@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from dataclasses import dataclass
 from typing import Union
-
+from my_tools.my_operators import rolling_zscore
 @dataclass
 class Report:
     static_df: pd.DataFrame
@@ -232,4 +232,102 @@ class FactorAnalysis:
         return self.report
 
         
+class TSFactorAnalysis:
+    """规则化时序因子分析
+    """
+    def __init__(self, alpha: pd.DataFrame, 
+                 hold_ret: pd.DataFrame, 
+                 boll_length: float, 
+                 boll_width: float, 
+                 conditions: list=[],
+                 adjust: bool=False,
+                 **kwargs) -> None:
+        self.alpha = alpha
+        self.hold_ret = hold_ret
+        self.boll_length = boll_length
+        self.boll_width = boll_width
+        self.conditions = conditions  # 条件列表, 用于判断是否进场
+        self.adjust = adjust  # 是否进行波动率调整
+        self.norm_window = kwargs.get('norm_window', 240)
+        self.shift_num = kwargs.get('shift_num', 1)
+        self.fee = kwargs.get('fee', 3e-4)
+    
+    
+    def _get_signals(self):
+        signal = my_trading.my_normalize(alpha=self.alpha.copy(), method='rolling_zscore', window=self.norm_window)
         
+        up_band = signal.rolling(self.boll_length, min_periods=2).mean() + self.boll_width * signal.rolling(self.boll_length, min_periods=2).std()
+        down_band = signal.rolling(self.boll_length, min_periods=2).mean() - self.boll_width * signal.rolling(self.boll_length, min_periods=2).std()
+        mid_band = signal.rolling(self.boll_length, min_periods=2).mean()
+        
+        pos = pd.DataFrame(np.full(signal.shape, np.nan), index=signal.index, columns=signal.columns)
+        pos[signal > up_band] = 1
+        pos[signal < down_band] = -1
+        pos[(signal < mid_band) & (signal.shift(1) > mid_band)] = 0
+        pos[(signal > mid_band) & (signal.shift(1) < mid_band)] = 0
+        if len(self.conditions) > 0:
+            for condition in self.conditions:
+                pos *= condition
+
+        pos = pos.fillna(method='ffill').shift(1) # 默认Alpha对应下一期收益
+        
+        # 波动率调整
+        if self.adjust:
+            pos = my_trading.my_vol_improve(alpha=pos, ret_df=self.hold_ret)
+        multiplier = self.alpha.count(axis=1).shift(-1)  # 时序因子默认为品种等权重资金
+        pos = pos.div(multiplier, axis=0)  # 对仓位进行等权重资金
+        return pos
+    
+    def _get_pnl(self):
+        pos = self._get_signals()
+        product_pnl = pos * self.hold_ret
+        pnl = product_pnl - (pos.fillna(0).diff().abs() * self.fee) # 扣除手续费
+        
+        return pnl
+    
+    def run(self):
+        pnl = self._get_pnl()
+        stats = my_trading.my_sharpe(pnl.sum(axis=1))
+        max_drawdown = my_trading.my_max_drawdown(pnl.sum(axis=1))
+        
+        stats_df = pd.DataFrame(data=[np.round(stats, 3),
+                                        f"{np.round(max_drawdown, 4)}%"], 
+                                    index=['TS Sharpe', 'TS Max Drawdown'], 
+                                    columns=['Stats'])
+        
+        self.report = Report(static_df=None,
+                        dynamic_df=None,
+                        ts_dynamic_df=pnl.cumsum().fillna(method='ffill'),
+                        ts_sharpe = stats,
+                        ic=None,
+                        rank_ic=None,
+                        ir=None,
+                        sharpe=stats,
+                        max_drawdown=max_drawdown,
+                        stats=stats_df,
+                        fee_data=None)
+        
+        return self.report
+    
+        
+    def plot(self, suptitle='TS Factor Analysis'):
+        pnl = self._get_pnl()
+        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(15, 10))
+        # 1. 时序PnL图
+        sns.lineplot(data=pnl.sum(axis=1).cumsum(), color='red', ax=axes[0])
+        axes[0].set_title('Time Series PnL')
+        axes[0].set_xlabel('Dates')
+        
+
+
+def equal_weight_alpha(alpha_list: list, norm_method: str="ts", **kwargs) -> pd.DataFrame:
+    """Equal weight the alpha"""
+    if norm_method == "ts":
+        norm_func = rolling_zscore
+    elif norm_method == None:
+        norm_func = lambda x, **kwargs: x
+        
+    alpha = 0
+    for a in alpha_list:
+        alpha += norm_func(a, **kwargs)
+    return alpha / len(alpha_list)
