@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-03-22 09:43:41
+LastEditTime: 2024-03-22 09:51:32
 Description: Tool functions, including backtesting, plotting
 '''
 import pandas as pd
@@ -74,16 +74,16 @@ def my_load_data_2(need: list, dominant: str, freq: str, adj: bool, **kwargs) ->
         adj = 'no_adj'
     if freq == 'day':
         for tp in need:
-            dd = pd.read_pickle('D:/projects/data/future/1d/{}/{}/{}.pkl'.format(dominant, adj,  tp)).reset_index().set_index('date')
+            dd = pd.read_pickle('D:/projects/data/future/1d/{}/{}/{}.pkl'.format(dominant, adj,  tp)).reset_index().set_index('date').sort_index()
             data_dict[tp] = dd.loc[:split_date]
     elif freq == '30m':
         for tp in need:
-            dd = pd.read_pickle('D:/projects/data/future/30m/{}/{}/{}.pkl'.format(dominant, adj, tp)).reset_index().set_index('datetime')
+            dd = pd.read_pickle('D:/projects/data/future/30m/{}/{}/{}.pkl'.format(dominant, adj, tp)).reset_index().set_index('datetime').sort_index()
             data_dict[tp] = dd.loc[:split_date]
     
     elif freq == '1m':
         for tp in need:
-            dd = pd.read_pickle('D:/projects/data/future/1m/{}/{}/{}.pkl'.format(dominant, adj, tp)).reset_index().set_index('datetime')
+            dd = pd.read_pickle('D:/projects/data/future/1m/{}/{}/{}.pkl'.format(dominant, adj, tp)).reset_index().set_index('datetime').sort_index()
             data_dict[tp] = dd.loc[:split_date]
     
     return data_dict
