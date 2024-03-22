@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-03-22 09:18:59
+LastEditTime: 2024-03-22 09:43:41
 Description: Tool functions, including backtesting, plotting
 '''
 import pandas as pd
@@ -65,7 +65,7 @@ def my_load_data_2(need: list, dominant: str, freq: str, adj: bool, **kwargs) ->
     '''
     Given types of futures, we load all data to a dictionary
     '''
-    split_date = kwargs.get("split_date", pd.to_datetime("today"))  # cut the data from a given date or time
+    split_date = kwargs.get("split_date", pd.to_datetime("today").date())  # cut the data from a given date or time
     
     data_dict = {}
     if adj:
