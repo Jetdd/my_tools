@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-03-18 10:52:44
+LastEditTime: 2024-03-22 09:18:59
 Description: Tool functions, including backtesting, plotting
 '''
 import pandas as pd
@@ -61,10 +61,12 @@ def my_load_data_uniform_time(need: list, freq: str, adj: bool) -> dict:
                  
     return data_dict
 
-def my_load_data_2(need: list, dominant: str, freq: str, adj: bool) -> dict:
+def my_load_data_2(need: list, dominant: str, freq: str, adj: bool, **kwargs) -> dict:
     '''
     Given types of futures, we load all data to a dictionary
     '''
+    split_date = kwargs.get("split_date", pd.to_datetime("today"))  # cut the data from a given date or time
+    
     data_dict = {}
     if adj:
         adj = 'adj'
@@ -73,16 +75,16 @@ def my_load_data_2(need: list, dominant: str, freq: str, adj: bool) -> dict:
     if freq == 'day':
         for tp in need:
             dd = pd.read_pickle('D:/projects/data/future/1d/{}/{}/{}.pkl'.format(dominant, adj,  tp)).reset_index().set_index('date')
-            data_dict[tp] = dd
+            data_dict[tp] = dd.loc[:split_date]
     elif freq == '30m':
         for tp in need:
             dd = pd.read_pickle('D:/projects/data/future/30m/{}/{}/{}.pkl'.format(dominant, adj, tp)).reset_index().set_index('datetime')
-            data_dict[tp] = dd
+            data_dict[tp] = dd.loc[:split_date]
     
     elif freq == '1m':
         for tp in need:
             dd = pd.read_pickle('D:/projects/data/future/1m/{}/{}/{}.pkl'.format(dominant, adj, tp)).reset_index().set_index('datetime')
-            data_dict[tp] = dd
+            data_dict[tp] = dd.loc[:split_date]
     
     return data_dict
 
