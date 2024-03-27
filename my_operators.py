@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-03-01 13:45:06
+LastEditTime: 2024-03-27 17:21:50
 Description: Time Series and Cross Sectional Operators
 '''
 
@@ -260,6 +260,12 @@ def cross_zscore(x):
     norm_x = (x - mean_x.values[:, None]) / (std_x.values[:, None])
     norm_x[norm_x > 3] = 3
     norm_x[norm_x < -3] = -3
+    return norm_x
+
+def cross_min_max(x):
+    min_x = x.min(axis=1)
+    max_x = x.max(axis=1)
+    norm_x = (x - min_x.values[:, None]) / (max_x.values[:, None] - min_x.values[:, None])
     return norm_x
 
 """ PARALLEL COMPUTE """
