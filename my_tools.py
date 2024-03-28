@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-03-22 09:51:32
+LastEditTime: 2024-03-28 16:13:30
 Description: Tool functions, including backtesting, plotting
 '''
 import pandas as pd
@@ -132,6 +132,7 @@ def get_universe() -> list:
             "PF","EG","EB","L","MA","PP","SA","UR",
             "V","FG","NR","RU","AU","AG", 'SP', 'CJ', 
             'PK', 'LH',] 
+    universe = sorted(universe)
     return universe
 
 def get_universe_pool() -> dict:
