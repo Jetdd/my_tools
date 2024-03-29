@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-03-28 16:13:30
+LastEditTime: 2024-03-29 14:22:32
 Description: Tool functions, including backtesting, plotting
 '''
 import pandas as pd
@@ -65,7 +65,8 @@ def my_load_data_2(need: list, dominant: str, freq: str, adj: bool, **kwargs) ->
     '''
     Given types of futures, we load all data to a dictionary
     '''
-    split_date = kwargs.get("split_date", pd.to_datetime("today").date())  # cut the data from a given date or time
+    start_date = kwargs.get("start_date", "20100104")  # cut the data from a given date or time
+    end_date = kwargs.get("end_date", pd.to_datetime("today").date())  # cut the data from a given date or time
     
     data_dict = {}
     if adj:
@@ -75,16 +76,16 @@ def my_load_data_2(need: list, dominant: str, freq: str, adj: bool, **kwargs) ->
     if freq == 'day':
         for tp in need:
             dd = pd.read_pickle('D:/projects/data/future/1d/{}/{}/{}.pkl'.format(dominant, adj,  tp)).reset_index().set_index('date').sort_index()
-            data_dict[tp] = dd.loc[:split_date]
+            data_dict[tp] = dd.loc[start_date:end_date]
     elif freq == '30m':
         for tp in need:
             dd = pd.read_pickle('D:/projects/data/future/30m/{}/{}/{}.pkl'.format(dominant, adj, tp)).reset_index().set_index('datetime').sort_index()
-            data_dict[tp] = dd.loc[:split_date]
+            data_dict[tp] = dd.loc[start_date:end_date]
     
     elif freq == '1m':
         for tp in need:
             dd = pd.read_pickle('D:/projects/data/future/1m/{}/{}/{}.pkl'.format(dominant, adj, tp)).reset_index().set_index('datetime').sort_index()
-            data_dict[tp] = dd.loc[:split_date]
+            data_dict[tp] = dd.loc[start_date:end_date]
     
     return data_dict
 
