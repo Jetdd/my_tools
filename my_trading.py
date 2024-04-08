@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-06 09:58:29
-LastEditTime: 2024-04-08 16:20:21
+LastEditTime: 2024-04-08 16:30:02
 Description: Trading-related Modules
 '''
 import pandas as pd
@@ -41,7 +41,7 @@ def my_sharpe(pnl: pd.DataFrame | pd.Series):
     res = np.round(pnl.mean() / pnl.std() * 16, 3)
     return res
 
-def my_max_drawdown(cumpnl: pd.Series) -> pd.Series:
+def my_max_drawdown(pnl: pd.Series) -> pd.Series:
     '''
     根据品种计算最大回撤
     :param pnl: (pd.Series) 
@@ -49,6 +49,7 @@ def my_max_drawdown(cumpnl: pd.Series) -> pd.Series:
     '''
     peak_value = -np.inf
     max_drawdown = -np.inf
+    cumpnl = pnl.cumsum()
     for row in cumpnl:
         peak_value = max(peak_value, row)
         max_drawdown = max(max_drawdown, (peak_value - row))
