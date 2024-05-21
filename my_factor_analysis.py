@@ -12,6 +12,8 @@ import seaborn as sns
 from dataclasses import dataclass
 from typing import Union
 from my_tools.my_operators import rolling_zscore
+from my_tools.my_tools import my_hold_ret
+
 @dataclass
 class Report:
     static_df: pd.DataFrame
@@ -331,3 +333,21 @@ def equal_weight_alpha(alpha_list: list, norm_method: str="ts", **kwargs) -> pd.
     for a in alpha_list:
         alpha += norm_func(a, **kwargs).fillna(0)  # fillna(0)避免有一些品种没有当前因子导致全部变成nan
     return alpha / len(alpha_list)
+
+
+
+class Backtest:
+    """根据不同调仓频率回测"""
+    def __init__(self, data_dict: dict, signal: pd.DataFrame, shift_num: int) -> None:
+        self.data_dict = data_dict
+        self.signal = signal    
+        self.shift_num = shift_num
+    
+    
+    def run(self):
+        hold_ret = my_hold_ret(self.data_dict, self.shift_num)
+        pos = self.signal.shift(1).iloc[::self.shift_num]
+        pos, hold_ret = pos.align(hold_ret, axis=0, join='left')
+        product_pnl = pos.div(pos.count(axis=1).values[:, None]) * hold_ret     
+        return product_pnl
+        

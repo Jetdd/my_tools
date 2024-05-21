@@ -6,10 +6,10 @@ Description: ML工具类
 """
 
 import pandas as pd
+from datetime import datetime, timedelta
 from typing import Any, Union
 from sklearn.decomposition import PCA
 from sklearn.model_selection import TimeSeriesSplit
-
 
 def rolling_pca(
     factor_df: pd.DataFrame, window: int, n_components: int
@@ -47,63 +47,35 @@ class MLTrainFit:
         X: pd.DataFrame,
         y: pd.DataFrame | pd.Series,
         model: object | str,
-        train_method: str = None,
+        train_start: str | datetime,
+        train_end: str | datetime,
+        predict_window: str,
+        train_method: str = 'none',
         **kwargs,
     ):
-        self.X = X
-        self.y = y
+        self.X = X  # two-level index with datetime and product, obtained from PrepareXY
+        self.y = y  # two-level index with datetime and product, obtained from PrepareXY
         self.model = model
         self.train_method = train_method
+        self.train_start = pd.to_datetime(train_start) if isinstance(train_start, str) else train_start
+        self.train_end = pd.to_datetime(train_end) if isinstance(train_end, str) else train_end
+        self.predict_window = predict_window
+        
+        if self.predict_window.endswith("d"):
+            self.test_start = pd.to_datetime(kwargs.get("test_start", train_start + timedelta(days=int(predict_window[:-1]))))
+        elif self.predict_window.endswith("m"):
+            self.test_start = pd.to_datetime(kwargs.get("test_start", train_start + timedelta(minutes=int(predict_window[:-1]))))
+        else:
+            raise ValueError("Predict Window Not Supported!")
+        
+        
+        
+        self.retrain_freq = kwargs.get(
+            "freq", "6M"
+        )  # Rolling/Expanding Window
+        
 
-        if self.train_method != None:
-            self.retrain_freq = kwargs.get(
-                "retrain_freq", "6M"
-            )  # Rolling/Expanding Window
-            self.rolling_window = kwargs.get(
-                "rolling_window", 10
-            )  # Rolling Window Size default 10 years
-            self.end_date = kwargs.get(
-                "end_date", "2023-07-01"
-            )  # Rolling Window End Date
-
-        self.shift_num = kwargs.get(
-            "shift_num", 10
-        )  # Time Series Shift. Need to cut the first shift_num rows from the test data.
-        self.train_test_size = kwargs.get("train_test_size", 0.8)
         self.model_params = kwargs.get("model_params", {})
-
-    def fit_predict(self):
-        if self.train_method == None:
-            return self._fit_predict()
-        elif self.train_method == "rolling":
-            return self._rolling_fit_predict()
-        elif self.train_method == "expanding":
-            return self._expanding_fit_predict()
-        else:
-            raise ValueError("Train Method Not Supported!")
-
-    def _split_train_test(self):
-        """Split train and test data based on size"""
-        # TimeSeriesSplit
-        if isinstance(self.y.index, pd.DatetimeIndex):
-            y_index = self.y.index.unique()
-            train_split_date = y_index[int(len(y_index) * self.train_test_size)]
-            test_split_date = y_index[
-                int(len(y_index) * self.train_test_size) + self.shift_num
-            ]
-            train_X = self.X[self.X.index <= train_split_date]
-            test_X = self.X[self.X.index > test_split_date]
-            train_y = self.y[self.y.index <= train_split_date]
-            test_y = self.y[self.y.index > test_split_date]
-
-        # Non-TimeSeriesSplit
-        else:
-            train_X = self.X.iloc[: int(len(self.X) * self.train_test_size)]
-            test_X = self.X.iloc[int(len(self.X) * self.train_test_size) :]
-            train_y = self.y.iloc[: int(len(self.y) * self.train_test_size)]
-            test_y = self.y.iloc[int(len(self.y) * self.train_test_size) :]
-
-        return train_X, test_X, train_y, test_y
 
     def _model(self):
         """Initialize model"""
@@ -112,63 +84,82 @@ class MLTrainFit:
         else:
             model = self.model
         return model
+    
+    def fit_predict(self):
+        if self.train_method == 'none':
+            return self._fit_predict()
+        
+        elif self.train_method == "rolling":
+            return self._rolling_fit_predict()
+        
+        elif self.train_method == "expanding":
+            return self._expanding_fit_predict()
+        
+        else:
+            raise ValueError("Train Method Not Supported!")
+
+    def _split_train_test(self, X: pd.DataFrame, y: pd.DataFrame, train_start: str, train_end: str, test_start: str, test_end: str):
+        """Split train and test data based on the start point and end point"""
+        X, y = X.align(y, axis=0, join="inner")
+        
+        # convert the multi-index to columns
+        X = X.reset_index()
+        y = y.reset_index()
+
+        # split the data
+        if "date" in X.columns:
+            self.time_col = "date"
+            train_X = X[(X["date"] >= train_start) & (X["date"] < train_end)]
+            train_y = y[(y["date"] >= train_start) & (y["date"] < train_end)]
+            test_X = X[(X["date"] >= test_start) & (X["date"] < test_end)]
+            test_y = y[(y["date"] >= test_start) & (y["date"] < test_end)]
+        elif "datetime" in X.columns:
+            self.time_col = "datetime"
+            train_X = X[(X["date"] >= train_start) & (X["date"] < train_end)]
+            train_y = y[(y["date"] >= train_start) & (y["date"] < train_end)]
+            test_X = X[(X["date"] >= test_start) & (X["date"] < test_end)]
+            test_y = y[(y["date"] >= test_start) & (y["date"] < test_end)]
+        else:
+            raise ValueError("Time Column Not Found!")
+        
+        return train_X, train_y, test_X, test_y
+
 
     def _fit_predict(self) -> pd.Series | pd.DataFrame:
         """Fit and predict"""
-        train_X, test_X, train_y, test_y = self._split_train_test()
+        train_X, test_X, train_y, test_y = self._split_train_test(self.X, self.y, train_start="2010-01-01", train_end="2020-01-01", test_start="2020-01-01",)
+        
+        # temporarily save the index for backtest later
+        train_idx = train_X[[self.time_col, 'product']]
+        test_idx = test_X[[self.time_col, 'product']]
+        
+        train_X = train_X.drop('product', axis=1).set_index(self.time_col)
+        train_y = train_y.drop('product', axis=1).set_index(self.time_col)
+        
         model = self._model()
-        if self.train_method == None:
-            try:
-                model.fit(train_X, train_y, **self.model_params)
-                pred = model.predict(test_X)
-            except Exception as e:
-                print(f"Model fit predict failed: {e}")
-        return pred
+        
+        model.fit(train_X, train_y, **self.model_params)
+        pred = model.predict(test_X)
+        
+        # convert to DataFrame
+        pred_df = pd.DataFrame(pred, columns=["pred"])
+        pred_df = pd.concat(
+            [pred_df, test_idx.reset_index(drop=True)], axis=1, ignore_index=True
+        )
+        
+        return pred_df
+    
+    def rolling_fit_predict(self):
+        """Rolling window fit and predict"""
+        res = []
+        
+            
+        return 
+            
 
-    def _rolling_fit_predict(self) -> dict:
-        """Rolling fit and predict"""
-        train_X, test_X, train_y, test_y = self._split_train_test()
 
-        start_idx = test_y.index[0]
-        split_dates = pd.date_range(
-            start_idx, self.end_date, freq=self.retrain_freq
-        )  # 保存划分日期
+        
 
-        # Rolling Fit and Predict
-        res = {}  # Save the pred result for each split date
-        for i in range(len(split_dates) - 1):
-            model = self._model()
-            train_end_date = split_dates[i]
-            train_X_ = train_X[train_X.index <= train_end_date]
-            train_y_ = train_y[train_y.index <= train_end_date]
-
-            test_start_date = train_end_date + pd.Timedelta(
-                self.shift_num / 5 * 7, unit="D"
-            )  # Convert the shift_num to trading days
-            if i == len(split_dates) - 2:
-                test_end_date = self.end_date
-            else:
-                test_end_date = split_dates[i + 1]
-            test_X_ = test_X[
-                (test_X.index > test_start_date) & (test_X.index <= test_end_date)
-            ]
-            test_y_ = test_y[
-                (test_y.index > test_start_date) & ((test_X.index <= test_end_date))
-            ]
-            try:
-                model.fit(train_X_, train_y_, **self.model_params)
-                pred = model.predict(test_X_)
-                res[test_start_date] = pred
-            except Exception as e:
-                print(f"Model rolling fit predict failed: {e}")
-        return res
-
-    def _expanding_fit_predict(self) -> dict:
-        """Expanding fit and predict"""
-        train_X, test_X, train_y, test_y = self._split_train_test()
-
-        start_idx = test_y.index[0]
-        split_dates = pd.date_range(start_idx, self.end_date, freq=self.retrain_freq)
 
 
 class PrepareXY:
@@ -181,7 +172,7 @@ class PrepareXY:
         **kwargs,
     ) -> None:
         self.alpha_dict = alpha_dict
-        self.target = target
+        self.target = target  # 已经shift过后的target
         self.norm_X = norm_X
         self.norm_params = kwargs.get("norm_params", {})
         self.align_method = align_method
@@ -200,6 +191,7 @@ class PrepareXY:
             alpha_list.append(factor)
             factor_names.append(factor_name)
         X = pd.concat(alpha_list, axis=1, keys=factor_names)
+        X.index.names = ["date", "product"]
         return X
 
     def target_to_Y(self) -> pd.Series:
@@ -208,7 +200,10 @@ class PrepareXY:
         Returns:
             pd.Series: index=[date/datetime, tp/product]
         """
-        return self.target.stack(dropna=False)
+        y = self.target.stack(dropna=False)
+        y.name = "target"
+        y.index.names = ["date", "product"]
+        return y
 
     def align_X_Y(self) -> Union[pd.DataFrame, pd.Series]:
         X = self.alpha_to_X()

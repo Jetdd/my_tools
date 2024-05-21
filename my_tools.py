@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-03-29 14:22:32
+LastEditTime: 2024-05-21 16:17:51
 Description: Tool functions, including backtesting, plotting
 '''
 import pandas as pd
@@ -16,57 +16,12 @@ from .my_operators import *
 """
 LOAD DATA
 """
-def my_load_data_uniform_time(need: list, freq: str, adj: bool) -> dict:
-    '''
-    Load and prepare data
-    :param file_path: (str) 
-    :return: (pd.DataFrame)
-    '''
-    def change_df_time(df: pd.DataFrame):
-         # 筛选异常结算价和无交易量的价格
-        df = df.filter(
-            (
-            (pl.col('close') != 0) |
-            (pl.col('volume') != 0) 
-            )
-        )
-        # 筛选时间：夜盘统一截止时间到23：00
-        df = df.filter(
-            (
-            (pl.col('datetime').cast(pl.Time).is_between(datetime.time(21, 0), datetime.time(23, 0))) |
-            (pl.col('datetime').cast(pl.Time).is_between(datetime.time(9, 0), datetime.time(15, 0))) 
-            )
-        )
-        df = df.rename({'underlying_symbol':'types'}) 
-        df = df.to_pandas()
-        return df
-        
-    data_dict = {}
-    if adj:
-        adj = 'adj'
-    else:
-        adj = 'unadj'
-        
-    if freq == '30m':
-        for tp in need:
-            dd = pd.read_pickle('D:/projects/data/minbar/30min/{}/{}.pkl'.format(adj, tp)).reset_index().set_index('datetime')
-            dd = change_df_time(dd)
-            data_dict[tp] = dd
-    
-    elif freq == '1m':
-        for tp in need:
-            dd = pd.read_pickle('D:/projects/data/minbar/1min/{}/{}.pkl'.format(adj, tp)).reset_index().set_index('datetime')
-            dd = change_df_time(dd)
-            data_dict[tp] = dd
-                 
-    return data_dict
-
-def my_load_data_2(need: list, dominant: str, freq: str, adj: bool, **kwargs) -> dict:
+def my_load_data(need: list, dominant: str, freq: str, adj: bool, **kwargs) -> dict:
     '''
     Given types of futures, we load all data to a dictionary
     '''
     start_date = kwargs.get("start_date", "20100104")  # cut the data from a given date or time
-    end_date = kwargs.get("end_date", pd.to_datetime("today").date())  # cut the data from a given date or time
+    end_date = kwargs.get("end_date", "today")  # cut the data from a given date or time
     
     data_dict = {}
     if adj:
@@ -75,18 +30,19 @@ def my_load_data_2(need: list, dominant: str, freq: str, adj: bool, **kwargs) ->
         adj = 'no_adj'
     if freq == 'day':
         for tp in need:
-            dd = pd.read_pickle('D:/projects/data/future/1d/{}/{}/{}.pkl'.format(dominant, adj,  tp)).reset_index().set_index('date').sort_index()
-            data_dict[tp] = dd.loc[start_date:end_date]
+            data = pd.read_pickle('D:/projects/data/future/1d/{}/{}/{}.pkl'.format(dominant, adj,  tp)).reset_index()
+            data = data[(data['date']>=start_date) & (data['date']<=end_date)]
+            data_dict[tp] = data.set_index('date')
     elif freq == '30m':
         for tp in need:
-            dd = pd.read_pickle('D:/projects/data/future/30m/{}/{}/{}.pkl'.format(dominant, adj, tp)).reset_index().set_index('datetime').sort_index()
-            data_dict[tp] = dd.loc[start_date:end_date]
-    
+            data = pd.read_pickle('D:/projects/data/future/30m/{}/{}/{}.pkl'.format(dominant, adj, tp)).reset_index()
+            data = data[(data['trading_date']>=start_date) & (data['trading_date']<=end_date)]
+            data_dict[tp] = data.set_index('datetime')
     elif freq == '1m':
         for tp in need:
-            dd = pd.read_pickle('D:/projects/data/future/1m/{}/{}/{}.pkl'.format(dominant, adj, tp)).reset_index().set_index('datetime').sort_index()
-            data_dict[tp] = dd.loc[start_date:end_date]
-    
+            data = pd.read_pickle('D:/projects/data/future/1m/{}/{}/{}.pkl'.format(dominant, adj, tp)).reset_index()
+            data = data[(data['trading_date']>=start_date) & (data['trading_date']<=end_date)]
+            data_dict[tp] = data.set_index('datetime')
     return data_dict
 
 def my_future_info():
