@@ -79,7 +79,7 @@ class FactorAnalysis:
         
         sig_df = df['groups'].unstack()
         sig_df = sig_df.applymap(lambda x: 1 if x==self.num_groups else -1 if x==1 else 0) # 规则化信号, 将因子值转换为0/1
-        sig_df = sig_df.div(self.hold_ret.count(axis=1).shift(-1), axis=0)  # 时序因子默认为品种等权重资金
+        sig_df = sig_df.div(self.hold_ret.count(axis=1), axis=0)  # 时序因子默认为品种等权重资金
         pnl = sig_df * self.hold_ret # 信号已经shift(1), 此处不需要再次shift
         alpha_signs = np.sign(pnl.sum(axis=0))  # 每个品种的alpha sign, 有可能是多最小组空最大组
         ts_pnl = pnl - (sig_df.fillna(0).diff().abs() * self.fee) # 扣除手续费
