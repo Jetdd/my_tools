@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-03-27 17:21:50
+LastEditTime: 2024-06-06 15:59:47
 Description: Time Series and Cross Sectional Operators
 '''
 
@@ -184,11 +184,13 @@ def ts_regression(y, x, window, vanilla=False, rettype=2) -> pd.Series:
             x = np.arange(window)
         x_ = df['x'].iloc[i-window:i-1].values
         y_ = df['y'].iloc[i-window:i-1].values
-        x_ = sm.add_constant(x_)
+        norm_x = (x_ - np.nanmin(x_)) / (np.nanmax(x_) - np.nanmin(x_))
+        norm_y = (y_ - np.nanmin(y_)) / (np.nanmax(y_) - np.nanmin(y_))
+        norm_x = sm.add_constant(norm_x)
         x_last = df['x'].iloc[i]
         y_last = df['y'].iloc[i]
         # Fit OLS regression model
-        results = sm.OLS(y_, x_).fit()
+        results = sm.OLS(norm_y, norm_x).fit()
 
         # print(results.params)
         if len(results.params) < 2:
