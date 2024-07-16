@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-06-06 15:59:47
+LastEditTime: 2024-06-18 15:20:36
 Description: Time Series and Cross Sectional Operators
 '''
 
@@ -177,18 +177,21 @@ def ts_regression(y, x, window, vanilla=False, rettype=2) -> pd.Series:
     rettype 4: SST
     rettype 5: R^2
     '''
-    df = pd.DataFrame({'x': x, 'y':y}).dropna()
-    res = np.zeros(len(df) - window)
-    for i in range(window, len(df)):
+    x_, y_ = x.dropna(), y.dropna()
+    x_, y_ = x_.align(y_, axis=1, how="inner")
+    idx = x_.index
+    x_, y_ = x_.values, y_.values
+    res = np.zeros(len(x_) - window)
+    for i in range(window, len(res)):
         if vanilla == True:
             x = np.arange(window)
-        x_ = df['x'].iloc[i-window:i-1].values
-        y_ = df['y'].iloc[i-window:i-1].values
+        xx = x_[i-window:i]
+        yy = y_[i-window:i]
         norm_x = (x_ - np.nanmin(x_)) / (np.nanmax(x_) - np.nanmin(x_))
         norm_y = (y_ - np.nanmin(y_)) / (np.nanmax(y_) - np.nanmin(y_))
         norm_x = sm.add_constant(norm_x)
-        x_last = df['x'].iloc[i]
-        y_last = df['y'].iloc[i]
+        x_last = xx[i]
+        y_last = yy[i]
         # Fit OLS regression model
         results = sm.OLS(norm_y, norm_x).fit()
 
@@ -218,7 +221,7 @@ def ts_regression(y, x, window, vanilla=False, rettype=2) -> pd.Series:
             res[i-window] = rsquared
         elif rettype == 6:
             res[i-window] = pred
-    return pd.Series(data=res, index=df.index[window:])
+    return pd.Series(data=res, index=idx[window:])
             
 def hump(x, threshold):
     '''
