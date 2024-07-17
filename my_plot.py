@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-11-01 15:56:21
-LastEditTime: 2024-01-03 10:26:19
+LastEditTime: 2024-07-17 13:29:09
 Description: Some Useful Plotly Functions (PnL)
 '''
 
@@ -250,3 +250,32 @@ def my_triple_moving_average(data, short_ma_period, medium_ma_period, long_ma_pe
     # Combine all traces and layout in a figure
     fig = go.Figure(data=[price_trace, short_ma_trace, medium_ma_trace, long_ma_trace], layout=layout)
     fig.write_html(save_path / 'plot.html')
+
+def my_twin_plot(
+    data1: pd.Series, 
+    data2: pd.Series, 
+    title1: str, 
+    title2: str,
+    suptitle: str="Subplots with Twin y-axis"
+) -> None:
+    # Create subplot with secondary axis
+    subplot_fig = make_subplots(specs=[[{"secondary_y": True}]])
+    
+    # Put dataframe in fig1 and fig2
+    fig1 = px.line(data1.rename(title1))
+    fig2 = px.line(data2.rename(title2))
+    
+    # Change the axis for fig2
+    fig2.update_traces(yaxis="y2")
+    
+    # Add the figs to the subplot figure
+    subplot_fig.add_traces(fig1.data + fig2.data)
+    
+    # Format subplot figure
+    subplot_fig.update_layout(
+        title=suptitle,
+        yaxis=dict(title=title1),
+        yaxis2 =dict(title=title2)
+    )
+    subplot_fig.for_each_trace(lambda t: t.update(line=dict(color=t.marker.color)))
+    return subplot_fig
