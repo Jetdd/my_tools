@@ -1,7 +1,7 @@
 '''
 Author: Jet Deng
 Date: 2023-10-24 15:24:10
-LastEditTime: 2024-06-18 15:20:36
+LastEditTime: 2024-08-02 15:14:09
 Description: Time Series and Cross Sectional Operators
 '''
 
@@ -178,7 +178,7 @@ def ts_regression(y, x, window, vanilla=False, rettype=2) -> pd.Series:
     rettype 5: R^2
     '''
     x_, y_ = x.dropna(), y.dropna()
-    x_, y_ = x_.align(y_, axis=1, how="inner")
+    x_, y_ = x_.align(y_, axis=1, join="inner")
     idx = x_.index
     x_, y_ = x_.values, y_.values
     res = np.zeros(len(x_) - window)
